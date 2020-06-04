@@ -2,68 +2,99 @@
 
 using namespace std;
 
-#define ll long long int
-
 
 struct FenwickTree{
 	
-	ll n;
-	vector<ll> bit;
+	struct node{
+		int k;
+		vector<int> rem;
+		node(int k) : k(k) {
+			rem.assign(k,0);
+			}
+		};
+		
+	int n,k;
+	vector<node> bit;
+	vector<int> oarr;
 	
-	FenwickTree(ll n){
+	FenwickTree(int n, int k){
 		this->n = n+1;
-		bit.assign(this->n, 0);
+		this->k = k;
+		bit.assign(this->n, node(k));
+		oarr.assign(n,0);
 		}
 		
-	void add(ll idx, ll val){
-		for(idx=idx+1; idx<n; idx += idx & -idx)
-			bit[idx] += val;
+	int build(vector<int>& arr){
+		for(int i=0; i<(int)arr.size(); i++){
+			oarr[i] = arr[i];
+			for(int idx=i+1; idx<n; idx += idx & (-idx)){
+				bit[idx].rem[ arr[i]%k ] += 1;
+				}
+			}
+		return 0;
 		}
-	
-	ll sum(ll idx){
-		ll res = 0;
-		for(idx=idx+1; idx>0; idx -= idx & -idx)
-			res += bit[idx];
+		
+	int update(int idx, int val){
+		
+		int preV = oarr[idx];
+		int newV = preV+val;
+				
+		for(int i=idx+1; i<n; i += i&(-i)){
+				bit[i].rem[preV%k] -= 1;
+				bit[i].rem[newV%k] += 1;
+			}
+		oarr[idx] = newV;
+		
+		return 0;
+		}
+		
+	int sum(int idx, int req){
+		int res = 0;
+		for(idx=idx+1; idx>0; idx -= idx & (-idx)){
+			res += bit[idx].rem[req];
+			}
 		return res;
 		}
 	
-	ll sum(ll l, ll r){
-		return sum(r)-sum(l-1);
-		}
-		
+	int sum(int l,int r, int req){
+		return sum(r,req)-sum(l-1,req);
+		}  
+	
 	};
 
 int main(){
 	
-	ll t;
-	cin>>t;
+	ios_base::sync_with_stdio(false);
+	cin.tie(nullptr);
 	
+	int n,q,k;
+	cin>>n>>q>>k;
 	
+	FenwickTree tree(n, k);
+	vector<int> arr(n,0);
 	
-	while (t--){
-		ll n;
-		cin>>n;
-		ll arr[n];
-		ll max = -1;
-		
-		for(ll i=0; i<n; i++){
-			cin>>arr[i];
-			max = (arr[i]>max)?arr[i]:max;
-			}
-		
-		//cout<<"input over"<<endl;
-		
-		
-		FenwickTree tree(max);
-		
-		ll count = 0;
-		for(ll i=n-1; i>=0; i--){
-			count += tree.sum(arr[i]-1);
-			tree.add(arr[i],1);
-			}
-		cout<<count<<endl;
-		
+	for(int i=0; i<n; i++){
+		cin>>arr[i];
 		}
+		
+	tree.build(arr);
+		
+	for(int i=0; i<q; i++){
+		int tb;
+		cin>>tb;
+		if(tb==1){
+			int p, val;
+			cin>>p>>val;
+			tree.update(p-1,val);
+			}
+		else{
+			int l,r,rem;
+			cin>>l>>r>>rem;
+			int ans = tree.sum(l-1,r-1,rem);
+			cout<<ans<<endl;
+			}
+		}	
+	
 	
 	return 0;
 	}
